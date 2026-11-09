@@ -34,7 +34,7 @@ Connects the Googlebook (Android Laptop) Debian Linux terminal to Android Wirele
 Automatically installs `/usr/bin/adb-auto`, the `man adb-auto` page, and required system dependencies (`adb`, `python3`, `iproute2`, `iputils-ping`) in one go:
 
 ```bash
-curl -LO https://github.com/Aryston/adb-auto/releases/latest/download/adb-auto_1.0.0_all.deb
+curl -fLO https://raw.githubusercontent.com/Aryston/adb-auto/main/dist/adb-auto_1.0.0_all.deb
 sudo apt install -y ./adb-auto_1.0.0_all.deb
 ```
 
