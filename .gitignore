@@ -1,0 +1,7 @@
+__pycache__/
+*.py[cod]
+.cache/
+*.swp
+.DS_Store
+export_chat.py
+*.html

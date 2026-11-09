@@ -1,0 +1,85 @@
+.TH ADB-AUTO 1 "November 2026" "adb-auto 1.0.0" "User Commands"
+.SH NAME
+adb-auto \- connect Googlebook Linux terminal to Android Wireless Debugging automatically
+.SH SYNOPSIS
+.B adb-auto
+[\fB\-h\fR]
+[\fB\-p\fR [\fIPIN\fR]]
+[\fB\-s\fR]
+[\fB\-d\fR]
+[\fB\-V\fR]
+.SH DESCRIPTION
+.B adb-auto
+connects the Debian Linux terminal on a Googlebook (Android Laptop) to the
+local Android Host over Wireless Debugging without looking up IP addresses or
+changing port numbers.
+.PP
+.B Note:
+Requires \fBUse wireless debugging\fR to be turned ON in Android Settings:
+.br
+\fBSettings \-> System \-> Developer options \-> Wireless debugging\fR
+.PP
+Android automatically suspends Wireless Debugging after sleep or Wi-Fi changes
+(sometimes showing \fIUnavailable\fR while the switch still looks ON). If
+connection fails, toggle \fBUse wireless debugging\fR OFF and back ON, then
+run \fBadb-auto\fR.
+.SH OPTIONS
+.TP
+.BR \-h ", " \-\-help
+Show help message and exit.
+.TP
+.BR \-p ", " \-\-pair " [\fIPIN\fR]"
+Pair device using 6-digit PIN (first-time setup). Automatically discovers the
+Googlebook IP and pairing port. Prompts for the 6-digit PIN if not given on
+the command line, then connects immediately.
+.TP
+.BR \-s ", " \-\-status
+Show pairing state, IP addresses, and connection status.
+.TP
+.BR \-d ", " \-\-disconnect
+Disconnect all ADB sessions.
+.TP
+.BR \-V ", " \-\-version
+Show version and license information.
+.SH EXAMPLES
+.TP
+Connect automatically (when Wireless Debugging is ON):
+.B adb-auto
+.TP
+Pair for the first time (prompts for 6-digit PIN):
+.B adb-auto \-\-pair
+.TP
+Pair with PIN 123456 and connect immediately:
+.B adb-auto \-\-pair 123456
+.TP
+Check pairing and connection status:
+.B adb-auto \-\-status
+.TP
+Disconnect ADB:
+.B adb-auto \-\-disconnect
+.SH FILES
+.TP
+.I ~/.android/adbkey, ~/.android/adb_known_hosts.pb
+Standard ADB cryptographic keys and trusted host certificates created during
+one-time pairing.
+.TP
+.I ~/.cache/adb-auto/last_wifi_ip
+Cached Googlebook Wi-Fi IP address.
+.SH EXIT STATUS
+.TP
+.B 0
+Connected (or already connected), paired, or completed requested command.
+.TP
+.B 1
+Wireless Debugging is OFF/suspended, pairing failed, or Wi-Fi is disconnected.
+.TP
+.B 130
+Cancelled by user (\fBCtrl+C\fR).
+.SH AUTHORS
+Vibe-coded and engineered with \fBGoogle Antigravity\fR (AI Agentic Coding Assistant by Google DeepMind).
+.SH COPYRIGHT
+License: GNU General Public License v2.0 (GPL-2.0-only).
+.br
+This is free software: you are free to change and redistribute it under the terms of the GNU General Public License version 2. There is NO WARRANTY, to the extent permitted by law.
+.SH SEE ALSO
+.BR adb (1)
