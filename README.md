@@ -30,15 +30,16 @@ Connects the Googlebook (Android Laptop) Debian Linux terminal to Android Wirele
 
 ## Installation
 
-### Option 1: Debian Package (`.deb`) — Recommended
-Automatically installs `/usr/bin/adb-auto`, the `man adb-auto` page, and required system dependencies (`adb`, `python3`, `iproute2`, `iputils-ping`) in one go:
+### Option 1: Debian Salsa APT Repository (`googlebook-tools`) — Recommended
+Add the [`googlebook-tools`](https://salsa.debian.org/prospero/googlebook-tools) APT repository on Debian Salsa to install `/usr/bin/adb-auto`, the `man adb-auto` page, required system dependencies (`adb`, `python3`, `iproute2`, `iputils-ping`), and receive automatic `apt` updates:
 
 ```bash
-curl -fLO https://raw.githubusercontent.com/Aryston/adb-auto/main/dist/adb-auto_1.0.0_all.deb
-sudo apt install -y ./adb-auto_1.0.0_all.deb
+echo "deb [trusted=yes] https://salsa.debian.org/prospero/googlebook-tools/-/raw/main apt/" | sudo tee /etc/apt/sources.list.d/googlebook-tools.list
+sudo apt update
+sudo apt install -y adb-auto
 ```
 
-Or if installing from a local clone of this repository:
+Or if installing directly from a local clone of this repository:
 
 ```bash
 sudo apt install -y ./dist/adb-auto_1.0.0_all.deb
