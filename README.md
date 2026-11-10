@@ -3,9 +3,9 @@
 [![License: GPL v2](https://img.shields.io/badge/License-GPL_v2-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
 [![Built with Google Antigravity](https://img.shields.io/badge/Vibe--Coded_with-Google_Antigravity-4285F4?logo=google)](https://deepmind.google/)
 
-Connects the Googlebook (Android Laptop) Debian Linux terminal to Android Wireless Debugging automatically—without looking up IP addresses or random port numbers.
+A minimalist Debian CLI tool that automatically connects the **Googlebook (Android Laptop)** Linux terminal to Android Wireless Debugging—no manual IP address or random port lookups required.
 
-> **Attribution:** Conceived by [Igor (@Aryston)](https://github.com/Aryston) (with guide testing by Denny Lockhart) and vibe-coded with **Google Antigravity** (Google DeepMind). Licensed under **GNU GPL v2.0**.
+> **Credits:** Created by **[Igor Jagec (@Aryston)](https://github.com/Aryston)**, vibe-coded with **Google Antigravity** (Google DeepMind), and QA tested by **Denny Lockhart**. Licensed under **GNU GPL v2.0**.
 
 ![adb-auto in action on Lenovo Googlebook 15](docs/images/06-adb-auto-in-action.jpg)
 
