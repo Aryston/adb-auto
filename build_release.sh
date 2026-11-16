@@ -4,7 +4,7 @@
 set -euo pipefail
 
 PKG_NAME="adb-auto"
-VERSION="1.0.0"
+VERSION="1.1.0"
 ARCH="all"
 
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

@@ -1,10 +1,9 @@
-.TH ADB-AUTO 1 "November 2026" "adb-auto 1.0.0" "User Commands"
+.TH ADB-AUTO 1 "November 2026" "adb-auto 1.1.0" "User Commands"
 .SH NAME
 adb-auto \- connect Googlebook Linux terminal to Android Wireless Debugging automatically
 .SH SYNOPSIS
 .B adb-auto
 [\fB\-h\fR]
-[\fB\-p\fR [\fIPIN\fR]]
 [\fB\-s\fR]
 [\fB\-d\fR]
 [\fB\-V\fR]
@@ -23,6 +22,12 @@ Android automatically suspends Wireless Debugging after sleep or Wi-Fi changes
 (sometimes showing \fIUnavailable\fR while the switch still looks ON). If
 connection fails, toggle \fBUse wireless debugging\fR OFF and back ON, then
 run \fBadb-auto\fR.
+.PP
+.B Pro Tip:
+Add the \fBWireless debugging\fR tile to your Android Quick Settings panel
+(\fBDeveloper options \-> Quick Settings developer tiles\fR) for one-tap toggling
+directly next to the Wi-Fi tile.
+
 .SH OPTIONS
 .TP
 .BR \-h ", " \-\-help

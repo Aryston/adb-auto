@@ -31,7 +31,7 @@ import time
 from pathlib import Path
 from typing import List, Optional, Tuple
 
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 CACHE_DIR = Path.home() / ".cache" / "adb-auto"
 LAST_IP_FILE = CACHE_DIR / "last_wifi_ip"
 KNOWN_HOSTS_FILE = Path.home() / ".android" / "adb_known_hosts.pb"
@@ -264,69 +264,28 @@ def try_adb_connect(ip: str, port: int, timeout: float = 4.0) -> bool:
     return False
 
 
-def print_wireless_off_warning(wifi_ip: Optional[str], paired: bool) -> None:
-    if not paired:
-        print(
-            "\n[✗] Device is not paired with Linux ADB yet.\n"
-            "    1. Open Settings -> System -> Developer options -> Wireless debugging\n"
-            "    2. Tap 'Pair device with pairing code'\n"
-            "    3. Run: adb-auto --pair <6-digit-PIN>",
-            file=sys.stderr,
-        )
-        return
-
+def print_wireless_off_warning(wifi_ip: Optional[str]) -> None:
     ip_label = wifi_ip or "Googlebook"
     print(
         f"\n[✗] Wireless Debugging is OFF or suspended on {ip_label}.\n"
-        "    Note: Android requires 'Use wireless debugging' to be turned ON manually\n"
-        "    (Settings -> System -> Developer options -> Wireless debugging).\n"
-        "    If the switch is already ON but says 'Unavailable', toggle it OFF and ON.",
+        "    Tip: Turn it ON via Quick Settings tile (next to Wi-Fi),\n"
+        "    or Settings -> System -> Developer options -> Wireless debugging.\n"
+        "    (If switch is ON but says 'Unavailable', toggle it OFF and ON).",
         file=sys.stderr,
     )
 
 
-async def pair_with_pin(wifi_ip: str, gw_ip: Optional[str], pin_code: Optional[str]) -> bool:
-    """
-    Discover the open SPAKE2+ pairing port on `wifi_ip` and run `adb pair ip:port pin`.
-    The user only provides the 6-digit PIN code.
-    """
-    if not pin_code:
-        print(
-            "First-Time Wireless ADB Pairing:\n"
-            "  1. Open Settings -> System -> Developer options -> Wireless debugging\n"
-            "  2. Tap 'Pair device with pairing code' (keep the popup open on screen)"
-        )
-        try:
-            pin_code = input("Enter 6-digit pairing code: ").strip()
-        except EOFError:
-            return False
-
-    pin_code = re.sub(r"\s+", "", pin_code or "")
-    if not re.match(r"^\d{6}$", pin_code):
-        print(f"[✗] Invalid pairing code '{pin_code}'. Expected a 6-digit number.", file=sys.stderr)
-        return False
-
-    print(f"[*] Scanning {wifi_ip} for active pairing port...")
-    _, candidates = await scan_for_adb_ports(wifi_ip, gw_ip, send_cnxn=False)
-    if not candidates:
-        print_wireless_off_warning(wifi_ip, paired=True)
-        return False
-
-    for port in candidates:
-        target = f"{wifi_ip}:{port}"
-        print(f"[*] Trying adb pair {target} ...")
-        rc, out, err = run_cmd(["adb", "pair", target, pin_code], timeout=6.0)
-        combined = f"{out} {err}"
-        if "Successfully paired" in combined:
-            print(f"[✓] {out or 'Successfully paired!'}")
-            return True
-
+def print_pairing_help(wifi_ip: Optional[str]) -> None:
+    ip_hint = f"{wifi_ip}:<PORT>" if wifi_ip else "<IP>:<PORT>"
     print(
-        f"\n[✗] Pairing failed on discovered port(s): {candidates}.\n"
-        "    Verify that the 6-digit code matches the popup currently shown on screen.",
+        "\n[!] Device is not paired with Linux ADB yet (or pairing key was forgotten).\n"
+        "    First-Time Setup (1-time pairing):\n"
+        "    1. Open Settings -> System -> Developer options -> Wireless debugging\n"
+        "    2. Tap 'Pair device with pairing code'\n"
+        f"    3. Run in terminal:  adb pair {ip_hint} <6-DIGIT-PIN>\n"
+        "    4. Run 'adb-auto' to connect automatically.",
         file=sys.stderr,
     )
-    return False
 
 
 async def print_status() -> int:
@@ -337,7 +296,7 @@ async def print_status() -> int:
 
     print("=== adb-auto Status ===")
     print(f"Version          : {VERSION}")
-    print(f"Pairing Status   : {'Paired (' + (host_id or 'ok') + ')' if paired else 'Not paired (run `adb-auto --pair`)'}")
+    print(f"Pairing Status   : {'Paired (' + (host_id or 'ok') + ')' if paired else 'Not paired (run `adb pair`)'}")
     print(f"VM Gateway IP    : {gw_ip or 'Not detected'}")
     print(f"Googlebook IP    : {wifi_ip or 'Not detected'}")
     if devices:
@@ -349,7 +308,10 @@ async def print_status() -> int:
         return 0
     else:
         print("ADB Connection   : Disconnected")
-        print_wireless_off_warning(wifi_ip, paired)
+        if not paired:
+            print_pairing_help(wifi_ip)
+        else:
+            print_wireless_off_warning(wifi_ip)
         return 1
 
 
@@ -362,11 +324,10 @@ async def async_main(args: argparse.Namespace) -> int:
     if args.status:
         return await print_status()
 
-    if args.pair is None:
-        existing = get_live_devices()
-        if existing:
-            print(f"[✓] Already connected to ADB: {', '.join(existing)}")
-            return 0
+    existing = get_live_devices()
+    if existing:
+        print(f"[✓] Already connected to ADB: {', '.join(existing)}")
+        return 0
 
     gw_ip = get_vm_gateway_ip()
     t0 = time.time()
@@ -381,14 +342,9 @@ async def async_main(args: argparse.Namespace) -> int:
     print(f"[*] Googlebook local IP detected: {wifi_ip} (gateway: {gw_ip or 'unknown'}) [{time.time() - t0:.2f}s]")
 
     paired, _ = is_paired()
-    if args.pair is not None or not paired:
-        pin = args.pair if isinstance(args.pair, str) and args.pair != "" else None
-        if not paired and args.pair is None:
-            print("[!] Device is not paired yet. Starting first-time pairing...")
-        ok = await pair_with_pin(wifi_ip, gw_ip, pin)
-        if not ok:
-            return 1
-        await asyncio.sleep(0.8)
+    if not paired:
+        print_pairing_help(wifi_ip)
+        return 1
 
     t_scan = time.time()
     print(f"[*] Scanning {wifi_ip} for active Wireless Debugging port...")
@@ -403,25 +359,28 @@ async def async_main(args: argparse.Namespace) -> int:
                 print(f"[✓] Connected to Wireless Debugging at {wifi_ip}:{port}!")
                 return 0
 
-    print_wireless_off_warning(wifi_ip, paired=True)
+        # Port was open but rejected -> pairing was forgotten on Android
+        print(
+            f"\n[!] Wireless Debugging is ON (port {ports_to_try[0]}), but Android rejected the connection.",
+            file=sys.stderr,
+        )
+        print_pairing_help(wifi_ip)
+        return 1
+
+    print_wireless_off_warning(wifi_ip)
     return 1
 
 
 def build_parser() -> argparse.ArgumentParser:
     epilog = """examples:
   adb-auto                Connect automatically (when Wireless Debugging is ON)
-  adb-auto --pair         Pair for the first time (prompts for 6-digit PIN)
-  adb-auto --pair 123456  Pair with PIN 123456 and connect immediately
   adb-auto --status       Check pairing and connection status
   adb-auto --disconnect   Disconnect ADB
 
 note:
-  Requires 'Use wireless debugging' to be turned ON in Android Settings:
-  Settings -> System -> Developer options -> Wireless debugging
-
-  Android automatically suspends Wireless Debugging after sleep or Wi-Fi
-  changes (sometimes showing 'Unavailable' while the switch still looks ON).
-  If connection fails, toggle 'Use wireless debugging' OFF and back ON.
+  Requires 'Use wireless debugging' to be turned ON on Android.
+  Tip: Add the 'Wireless debugging' tile to Quick Settings developer tiles
+  (Developer options -> Quick Settings developer tiles) for quick 1-tap toggling.
 
 Built with Google Antigravity | License: GNU GPL v2.0 (GPL-2.0-only)
 """
@@ -430,14 +389,6 @@ Built with Google Antigravity | License: GNU GPL v2.0 (GPL-2.0-only)
         description="Connect Googlebook Linux terminal to Android Wireless Debugging automatically.",
         epilog=epilog,
         formatter_class=argparse.RawDescriptionHelpFormatter,
-    )
-    parser.add_argument(
-        "-p",
-        "--pair",
-        nargs="?",
-        const="",
-        metavar="PIN",
-        help="Pair device using 6-digit PIN (first-time setup)",
     )
     parser.add_argument(
         "-s",

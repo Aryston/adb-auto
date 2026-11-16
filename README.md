@@ -40,18 +40,25 @@ sudo apt install -y adb-auto
 
 ---
 
-## First-Time Pairing (`adb-auto --pair`)
+## First-Time Setup (1-Time Pairing)
 
-You only need to pair **once**:
+Pairing is a standard Android security handshake required only **once**:
 
-1. In **Settings -> System -> Developer options -> Wireless debugging**, tap **Pair device with pairing code** to display the 6-digit PIN:
-   ![Pair device with pairing code](docs/images/04-pair-with-code.png)
+1. Go to **Settings -> System -> Developer options -> Wireless debugging**.
+2. Tap **Pair device with pairing code** (a popup displays the IP, port, and a 6-digit Wi-Fi pairing code):
    ![6-digit pairing code popup](docs/images/05-pairing-code-popup.png)
-2. Keep that popup open and run:
+3. In your Linux terminal, run the pairing command shown on the screen:
    ```bash
-   adb-auto --pair
+   adb pair 192.168.0.8:<PORT> <6-DIGIT-CODE>
    ```
-   Enter the 6-digit PIN when prompted (no IP or port needed!). `adb-auto` pairs and connects automatically.
+4. Now run **`adb-auto`** to connect automatically!
+
+> [!TIP]
+> **1-Tap Daily Toggle (Quick Settings Tile):**
+> Instead of opening Android Settings every day, add the **Wireless debugging** tile to your Quick Settings panel:
+> **Settings -> System -> Developer options -> Quick Settings developer tiles -> Toggle "Wireless debugging" ON**.
+>
+> Now you can wake or re-enable Wireless Debugging with a single tap next to Wi-Fi!
 
 ---
 
@@ -60,16 +67,15 @@ You only need to pair **once**:
 Once paired, simply run `adb-auto` anytime Wireless Debugging is ON:
 
 ```text
-usage: adb-auto [-h] [-p [PIN]] [-s] [-d] [-V]
+usage: adb-auto [-h] [-s] [-d] [-V]
 
 Connect Googlebook Linux terminal to Android Wireless Debugging automatically.
 
 options:
-  -h, --help          Show this help message and exit
-  -p, --pair [PIN]    Pair device using 6-digit PIN (first-time setup)
-  -s, --status        Show pairing state, IP addresses, and connection status
-  -d, --disconnect    Disconnect all ADB sessions
-  -V, --version       Show version and license information
+  -h, --help        Show this help message and exit
+  -s, --status      Show pairing state, IP addresses, and connection status
+  -d, --disconnect  Disconnect all ADB sessions
+  -V, --version     Show version and license information
 ```
 
 ### Examples
@@ -77,12 +83,6 @@ options:
 ```bash
 # Connect automatically (when Wireless Debugging is ON)
 adb-auto
-
-# Pair for the first time (prompts for 6-digit PIN)
-adb-auto --pair
-
-# Pair with PIN 123456 and connect immediately
-adb-auto --pair 123456
 
 # Check pairing and connection status
 adb-auto --status
