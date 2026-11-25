@@ -12,6 +12,11 @@ DIST_DIR="$PROJECT_DIR/dist"
 STAGE_ROOT="/tmp/${PKG_NAME}-build-$$"
 DEB_ROOT="$STAGE_ROOT/${PKG_NAME}_${VERSION}_${ARCH}"
 
+# Enforce Debian Reproducible Builds via SOURCE_DATE_EPOCH
+if [ -f "$PROJECT_DIR/debian/changelog" ]; then
+    export SOURCE_DATE_EPOCH="$(dpkg-parsechangelog -l "$PROJECT_DIR/debian/changelog" -STimestamp)"
+fi
+
 rm -rf "$STAGE_ROOT"
 mkdir -p "$DIST_DIR"
 
@@ -72,6 +77,11 @@ chmod 0644 "$DEB_ROOT/DEBIAN/control"
 # Generate md5sums control file
 (cd "$DEB_ROOT" && find * -type f ! -path 'DEBIAN/*' -exec md5sum {} + > "$DEB_ROOT/DEBIAN/md5sums")
 chmod 0644 "$DEB_ROOT/DEBIAN/md5sums"
+
+# Clamp all timestamps to SOURCE_DATE_EPOCH for reproducible builds
+if [ -n "${SOURCE_DATE_EPOCH:-}" ]; then
+    find "$DEB_ROOT" -exec touch -h -d "@$SOURCE_DATE_EPOCH" {} +
+fi
 
 DEB_OUT="$DIST_DIR/${PKG_NAME}_${VERSION}_${ARCH}.deb"
 dpkg-deb --root-owner-group --build "$DEB_ROOT" "$DEB_OUT"
