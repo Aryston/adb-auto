@@ -31,7 +31,7 @@ import time
 from pathlib import Path
 from typing import List, Optional, Tuple
 
-VERSION = "1.1.0"
+VERSION = "1.3.0"
 CACHE_DIR = Path.home() / ".cache" / "adb-auto"
 LAST_IP_FILE = CACHE_DIR / "last_wifi_ip"
 KNOWN_HOSTS_FILE = Path.home() / ".android" / "adb_known_hosts.pb"

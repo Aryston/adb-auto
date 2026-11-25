@@ -2,8 +2,9 @@
 
 [![License: GPL v2](https://img.shields.io/badge/License-GPL_v2-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
 [![Built with Google Antigravity](https://img.shields.io/badge/Vibe--Coded_with-Google_Antigravity-4285F4?logo=google)](https://deepmind.google/)
+[![Debian Package](https://img.shields.io/badge/Debian-Salsa_APT-D70A53?logo=debian)](https://salsa.debian.org/prospero/googlebook-tools)
 
-A minimalist Debian CLI tool that automatically connects the **Googlebook (Android Laptop)** Linux terminal to Android Wireless Debugging—no manual IP address or random port lookups required.
+A minimalist Debian CLI utility that automatically bridges the Googlebook Linux terminal (Debian container) to host Android Wireless Debugging without manual IP lookups or port scanning.
 
 > **Credits:** Created by **[Igor Jagec (@Aryston)](https://github.com/Aryston)**, vibe-coded with **Google Antigravity** (Google DeepMind), and QA tested by **Denny Lockhart**. Licensed under **GNU GPL v2.0**.
 
@@ -11,20 +12,16 @@ A minimalist Debian CLI tool that automatically connects the **Googlebook (Andro
 
 ---
 
-## Prerequisite: Enable Wireless Debugging on Googlebook
+## Why adb-auto?
 
-`adb-auto` requires **Use wireless debugging** to be turned **ON** in Android Settings:
+On Googlebook OS, Android assigns a **random, dynamic TCP port** to Wireless Debugging every time the service starts, after waking from sleep, or following a Wi-Fi reconnect. Furthermore, Android frequently suspends inactive debugging sessions, displaying `"Unavailable (not allowed)"`.
 
-1. Go to **Settings -> About device** and tap **Build number** 7 times until Developer options unlock.
-   ![Enable Developer Options](docs/images/01-enable-dev-options.png)
-2. Go to **Settings -> System -> Developer options** and tap **Wireless debugging**.
-   ![Wireless Debugging Menu](docs/images/02-wireless-debugging-menu.png)
-3. Toggle on **Use wireless debugging** and accept the **Allow wireless debugging?** prompt.
-   ![Allow Wireless Debugging](docs/images/03-allow-wireless-debugging.png)
+Normally, reconnecting requires:
+1. Navigating through multiple Android Settings menus.
+2. Manually checking the new dynamic port number.
+3. Typing `adb connect <ip>:<port>` in the Linux terminal.
 
-> **Note on Sleep / Disconnections:** Android automatically suspends Wireless Debugging after sleep or Wi-Fi changes (sometimes showing `Unavailable (not allowed)` while the switch still looks ON). If connection fails, toggle **Use wireless debugging** OFF and back ON, then run `adb-auto`.
->
-> ![Unavailable (not allowed) state](docs/images/07-unavailable-not-allowed.jpg)
+**`adb-auto` turns this into a zero-lookup workflow:** after a quick one-off setup, it automatically locates the host gateway, fingerprints the active dynamic ADB port, and establishes the connection in seconds.
 
 ---
 
@@ -40,31 +37,51 @@ sudo apt install -y adb-auto
 
 ---
 
-## First-Time Setup (1-Time Pairing)
+## The One-Off Setup (Do This Once)
 
-Pairing is a standard Android security handshake required only **once**:
+To make future connections effortless, complete these one-time steps on your Googlebook:
 
-1. Go to **Settings -> System -> Developer options -> Wireless debugging**.
-2. Tap **Pair device with pairing code** (a popup displays the IP, port, and a 6-digit Wi-Fi pairing code):
+### 1. Unlock Developer Options & Enable the Quick Settings Tile
+
+Android automatically suspends background Wireless Debugging after sleep or network changes. Adding the developer tile turns waking ADB back up into a **1-second, single-click fix** instead of digging through menus:
+
+1. Open **Settings > About device** and tap **Build number** 7 times.
+   ![Enable Developer Options](docs/images/01-enable-dev-options.png)
+2. Go to **Settings > System > Developer options > Quick Settings developer tiles**.
+3. Toggle ON **Wireless debugging**.
+4. Pull down or click the status tray in the **top-right corner** of your screen: you will now see the **Android bug icon** tile appear right next to your Wi-Fi tile.
+   ![Quick Settings Developer Tile with Android Bug Icon](docs/images/08-quick-settings-tile.png)
+
+### 2. One-Time Device Pairing
+
+Android security requires physical authorization for the first connection:
+
+1. In **Settings > System > Developer options > Wireless debugging**, tap **Pair device with pairing code** to view your 6-digit Wi-Fi pairing code and pairing port.
    ![6-digit pairing code popup](docs/images/05-pairing-code-popup.png)
-3. In your Linux terminal, run the pairing command shown on the screen:
+2. In your terminal, pair using standard ADB:
    ```bash
-   adb pair 192.168.0.8:<PORT> <6-DIGIT-CODE>
+   adb pair <IP>:<PAIRING_PORT>
    ```
-4. Now run **`adb-auto`** to connect automatically!
-
-> [!TIP]
-> **1-Tap Daily Toggle (Quick Settings Tile):**
-> Instead of opening Android Settings every day, add the **Wireless debugging** tile to your Quick Settings panel:
-> **Settings -> System -> Developer options -> Quick Settings developer tiles -> Toggle "Wireless debugging" ON**.
->
-> Now you can wake or re-enable Wireless Debugging with a single tap next to Wi-Fi!
+3. Enter the 6-digit PIN when prompted.
 
 ---
 
-## Daily Usage & Options (`adb-auto --help`)
+## Daily Usage: How It Works
 
-Once paired, simply run `adb-auto` anytime Wireless Debugging is ON:
+Once the one-off setup is complete, reconnecting is completely seamless:
+
+- **When Wireless Debugging is active:** Just run:
+  ```bash
+  adb-auto
+  ```
+- **When connection drops or Android suspends debugging (`Unavailable`):**
+  1. Click or pull down the Quick Settings tray from the top right.
+  2. Tap the **Android bug tile** off and back on (purple = active).
+  3. Run `adb-auto` in your terminal.
+
+---
+
+## Options & Commands (`adb-auto --help`)
 
 ```text
 usage: adb-auto [-h] [-s] [-d] [-V]
@@ -81,10 +98,10 @@ options:
 ### Examples
 
 ```bash
-# Connect automatically (when Wireless Debugging is ON)
+# Connect automatically (when Wireless Debugging is active)
 adb-auto
 
-# Check pairing and connection status
+# Check pairing state and connection status
 adb-auto --status
 
 # Disconnect ADB
@@ -95,10 +112,16 @@ adb-auto --disconnect
 
 ## Building From Source
 
-Rebuild both `dist/adb-auto_1.0.0_all.deb` and `dist/adb-auto-1.0.0.tar.gz`:
+To build the native Debian package (`dist/adb-auto_1.3.0_all.deb`):
 
 ```bash
 ./build_release.sh
+```
+
+To install the newly built package locally:
+
+```bash
+sudo dpkg -i dist/adb-auto_1.3.0_all.deb
 ```
 
 ---

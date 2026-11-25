@@ -1,4 +1,4 @@
-.TH ADB-AUTO 1 "November 2026" "adb-auto 1.1.0" "User Commands"
+.TH ADB-AUTO 1 "November 2026" "adb-auto 1.3.0" "User Commands"
 .SH NAME
 adb-auto \- connect Googlebook Linux terminal to Android Wireless Debugging automatically
 .SH SYNOPSIS
@@ -23,20 +23,28 @@ Android automatically suspends Wireless Debugging after sleep or Wi-Fi changes
 connection fails, toggle \fBUse wireless debugging\fR OFF and back ON, then
 run \fBadb-auto\fR.
 .PP
-.B Pro Tip:
+.B Quick Settings Tile (Recommended):
 Add the \fBWireless debugging\fR tile to your Android Quick Settings panel
 (\fBDeveloper options \-> Quick Settings developer tiles\fR) for one-tap toggling
-directly next to the Wi-Fi tile.
+directly next to the Wi-Fi tile from the top-right status tray.
+
+.SH FIRST-TIME SETUP (PAIRING)
+Pairing is a standard Android security handshake required only once:
+.PP
+1. In Android Settings, navigate to \fBSettings \-> System \-> Developer options \-> Wireless debugging\fR.
+.br
+2. Tap \fBPair device with pairing code\fR to view your 6-digit PIN and pairing port.
+.br
+3. In your terminal, pair using standard ADB:
+.IP
+.B adb pair <IP>:<PAIRING_PORT>
+.PP
+Enter the 6-digit PIN when prompted. Once paired, \fBadb-auto\fR handles all future connections automatically.
 
 .SH OPTIONS
 .TP
 .BR \-h ", " \-\-help
 Show help message and exit.
-.TP
-.BR \-p ", " \-\-pair " [\fIPIN\fR]"
-Pair device using 6-digit PIN (first-time setup). Automatically discovers the
-Googlebook IP and pairing port. Prompts for the 6-digit PIN if not given on
-the command line, then connects immediately.
 .TP
 .BR \-s ", " \-\-status
 Show pairing state, IP addresses, and connection status.
@@ -46,22 +54,18 @@ Disconnect all ADB sessions.
 .TP
 .BR \-V ", " \-\-version
 Show version and license information.
+
 .SH EXAMPLES
 .TP
-Connect automatically (when Wireless Debugging is ON):
+Connect automatically (when Wireless Debugging is active):
 .B adb-auto
 .TP
-Pair for the first time (prompts for 6-digit PIN):
-.B adb-auto \-\-pair
-.TP
-Pair with PIN 123456 and connect immediately:
-.B adb-auto \-\-pair 123456
-.TP
-Check pairing and connection status:
+Check pairing state and connection status:
 .B adb-auto \-\-status
 .TP
-Disconnect ADB:
+Disconnect ADB sessions:
 .B adb-auto \-\-disconnect
+
 .SH FILES
 .TP
 .I ~/.android/adbkey, ~/.android/adb_known_hosts.pb
@@ -70,18 +74,20 @@ one-time pairing.
 .TP
 .I ~/.cache/adb-auto/last_wifi_ip
 Cached Googlebook Wi-Fi IP address.
+
 .SH EXIT STATUS
 .TP
 .B 0
-Connected (or already connected), paired, or completed requested command.
+Connected (or already connected) or completed requested command.
 .TP
 .B 1
-Wireless Debugging is OFF/suspended, pairing failed, or Wi-Fi is disconnected.
+Wireless Debugging is OFF/suspended, not paired, or Wi-Fi is disconnected.
 .TP
 .B 130
 Cancelled by user (\fBCtrl+C\fR).
+
 .SH AUTHORS
-Vibe-coded and engineered with \fBGoogle Antigravity\fR (AI Agentic Coding Assistant by Google DeepMind).
+Created by \fBIgor Jagec (@Aryston)\fR, QA tested by \fBDenny Lockhart\fR, vibe-coded and engineered with \fBGoogle Antigravity\fR (Google DeepMind).
 .SH COPYRIGHT
 License: GNU General Public License v2.0 (GPL-2.0-only).
 .br

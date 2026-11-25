@@ -1,0 +1,24 @@
+adb-auto (1.3.0) trixie; urgency=medium
+
+  * Bump version to 1.3.0.
+  * Update documentation and man page with Quick Settings tile guidance.
+  * Remove obsolete --pair command-line options in favor of native adb pair.
+  * Prune redundant tarball packaging in favor of native Debian packaging.
+  * Include Debian changelog in /usr/share/doc/adb-auto/changelog.Debian.gz.
+
+ -- Igor Jagec <igor.jagec@gmail.com>  Wed, 25 Nov 2026 11:15:00 +0000
+
+adb-auto (1.1.0) trixie; urgency=medium
+
+  * Remove fragile socket port-scan relay from --pair.
+  * Add automatic detection of unconfigured pairing state with actionable guidance.
+  * Improve recovery instructions for suspended wireless debugging sessions.
+
+ -- Igor Jagec <igor.jagec@gmail.com>  Mon, 16 Nov 2026 21:00:00 +0000
+
+adb-auto (1.0.0) trixie; urgency=low
+
+  * Initial Debian release for Googlebook (Android Laptop).
+  * Automatically connects Linux terminal to Android host Wireless Debugging.
+
+ -- Igor Jagec <igor.jagec@gmail.com>  Sun, 08 Nov 2026 12:00:00 +0000
