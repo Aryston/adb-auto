@@ -3,6 +3,12 @@
 All notable changes to `adb-auto` are documented in this file.
 Format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.3.1] - 2026-11-26
+
+### Fixed
+- Added automatic fallback to user pairing keys (`/home/<user>/.android`) when running in a `root` or `sudo` shell, preventing false "not paired" warnings.
+- Automatically shares and links ADB authentication between standard users and `root`.
+
 ## [1.3.0] - 2026-11-25
 
 ### Added

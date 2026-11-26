@@ -23,6 +23,7 @@ Built with Google Antigravity. Licensed under GNU GPL v2.0.
 
 import argparse
 import asyncio
+import os
 import re
 import struct
 import subprocess
@@ -31,10 +32,56 @@ import time
 from pathlib import Path
 from typing import List, Optional, Tuple
 
-VERSION = "1.3.0"
+VERSION = "1.3.1"
 CACHE_DIR = Path.home() / ".cache" / "adb-auto"
 LAST_IP_FILE = CACHE_DIR / "last_wifi_ip"
-KNOWN_HOSTS_FILE = Path.home() / ".android" / "adb_known_hosts.pb"
+
+
+def resolve_android_env() -> Tuple[Path, Optional[Path]]:
+    """
+    Locate active .android directory and adb_known_hosts.pb.
+    If running as root or via sudo, automatically checks for paired keys in
+    SUDO_USER's or standard user's home directory (/home/<user>/.android)
+    and establishes a symlink if missing so ADB authentication succeeds seamlessly.
+    """
+    user_home = Path.home()
+    primary_android = user_home / ".android"
+    primary_known_hosts = primary_android / "adb_known_hosts.pb"
+
+    if primary_known_hosts.exists():
+        return primary_known_hosts, primary_android
+
+    # Check root / sudo fallback
+    if hasattr(os, "geteuid") and os.geteuid() == 0:
+        candidates = []
+        sudo_user = os.environ.get("SUDO_USER")
+        if sudo_user and sudo_user != "root":
+            candidates.append(Path(f"/home/{sudo_user}/.android"))
+
+        home_dir = Path("/home")
+        if home_dir.exists():
+            try:
+                for entry in sorted(home_dir.iterdir()):
+                    candidate = entry / ".android"
+                    if candidate not in candidates:
+                        candidates.append(candidate)
+            except Exception:
+                pass
+
+        for candidate in candidates:
+            kh = candidate / "adb_known_hosts.pb"
+            if kh.exists():
+                if not primary_android.exists():
+                    try:
+                        primary_android.symlink_to(candidate)
+                        return primary_android / "adb_known_hosts.pb", primary_android
+                    except Exception:
+                        pass
+                if (candidate / "adbkey").exists():
+                    os.environ.setdefault("ADB_VENDOR_KEYS", str(candidate / "adbkey"))
+                return kh, candidate
+
+    return primary_known_hosts, primary_android
 
 
 def _build_adb_cnxn() -> bytes:
@@ -67,11 +114,12 @@ def run_cmd(args: List[str], timeout: float = 5.0) -> Tuple[int, str, str]:
 
 
 def is_paired() -> Tuple[bool, Optional[str]]:
-    """Check if ~/.android/adb_known_hosts.pb exists and has a paired host identifier."""
-    if not KNOWN_HOSTS_FILE.exists():
+    """Check if adb_known_hosts.pb exists and has a paired host identifier."""
+    known_hosts_file, _ = resolve_android_env()
+    if not known_hosts_file.exists():
         return False, None
     try:
-        raw = KNOWN_HOSTS_FILE.read_bytes()
+        raw = known_hosts_file.read_bytes()
         if len(raw) < 4:
             return False, None
         m = re.search(rb"(adb-[A-Za-z0-9_-]+)", raw)
@@ -277,15 +325,17 @@ def print_wireless_off_warning(wifi_ip: Optional[str]) -> None:
 
 def print_pairing_help(wifi_ip: Optional[str]) -> None:
     ip_hint = f"{wifi_ip}:<PORT>" if wifi_ip else "<IP>:<PORT>"
-    print(
-        "\n[!] Device is not paired with Linux ADB yet (or pairing key was forgotten).\n"
-        "    First-Time Setup (1-time pairing):\n"
-        "    1. Open Settings -> System -> Developer options -> Wireless debugging\n"
-        "    2. Tap 'Pair device with pairing code'\n"
-        f"    3. Run in terminal:  adb pair {ip_hint} <6-DIGIT-PIN>\n"
+    msg = [
+        "\n[!] Device is not paired with Linux ADB yet (or pairing key was forgotten).",
+        "    First-Time Setup (1-time pairing):",
+        "    1. Open Settings -> System -> Developer options -> Wireless debugging",
+        "    2. Tap 'Pair device with pairing code'",
+        f"    3. Run in terminal:  adb pair {ip_hint} <6-DIGIT-PIN>",
         "    4. Run 'adb-auto' to connect automatically.",
-        file=sys.stderr,
-    )
+    ]
+    if hasattr(os, "geteuid") and os.geteuid() == 0:
+        msg.append("    (Note: Running in root shell. If previously paired as 'droid', type 'exit' or su - droid).")
+    print("\n".join(msg), file=sys.stderr)
 
 
 async def print_status() -> int:
